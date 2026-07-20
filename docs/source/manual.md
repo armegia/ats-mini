@@ -63,7 +63,21 @@ The menu can be invoked by clicking the encoder button and is closed automatical
 * **AGC/ATTN** - Automatic Gain Control (on/off) or Attenuation level. The attenuator is not applicable to SSB mode.
 * **AVC** - Sets the maximum gain for automatic volume control (not applicable to FM mode).
 * **SoftMute** - Sets softmute max attenuation (only applicable to AM/SSB).
+* **Sync** - Enables synchronous AM reception while USB or LSB mode is active. The current mode is shown as `USB S` or `LSB S` while synchronization is enabled.
 * **Settings** - Settings submenu.
+
+### Synchronous AM reception
+
+Sync mode uses the SSB patch AFC to lock onto an AM carrier. It is available as an option in USB and LSB modes rather than as a separate modulation mode:
+
+1. Tune to the AM station.
+2. Select USB or LSB mode and adjust the frequency close to the carrier.
+3. Open the menu and set **Sync** to **On**.
+4. Check that the mode indicator changes to `USB S` or `LSB S`.
+
+When unlocked in ordinary USB or LSB mode, tuning away from the carrier changes the recovered audio pitch. When Sync is locked, the AFC follows small carrier offsets and keeps the audio pitch stable. Moving too far away from the carrier will eventually exceed its locking range.
+
+Initial hardware validation used a local AM broadcast on 954 kHz. AM and ordinary SSB reception worked normally, while ordinary SSB produced the expected pitch change when detuned. With Sync enabled, the recovered pitch remained stable with approximately 1 kHz of detuning, reaching about 953 or 955 kHz depending on the selected sideband. This is the expected synchronous detection behavior. The complete set of bandwidth filters has not yet been tested exhaustively.
 
 ## Settings menu
 

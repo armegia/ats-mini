@@ -85,7 +85,8 @@ Band *getCurrentBand() { return(&bands[bandIdx]); }
 #define MENU_AGC_ATT      9
 #define MENU_AVC         10
 #define MENU_SOFTMUTE    11
-#define MENU_SETTINGS    12
+#define MENU_SYNC        12
+#define MENU_SETTINGS    13
 
 int8_t menuIdx = MENU_VOLUME;
 
@@ -103,6 +104,7 @@ static const char *menu[] =
   "AGC/ATTN",
   "AVC",
   "SoftMute",
+  "Sync",
   "Settings",
 };
 
@@ -169,6 +171,17 @@ int getTotalFmRegions() { return(ITEM_COUNT(fmRegions)); }
 const char *bandModeDesc[] = { "FM", "LSB", "USB", "AM" };
 
 int getTotalModes() { return(ITEM_COUNT(bandModeDesc)); }
+
+const char *getCurrentModeDesc()
+{
+  if(syncEnabled)
+  {
+    if(currentMode == LSB) return("LSB S");
+    if(currentMode == USB) return("USB S");
+  }
+
+  return(bandModeDesc[currentMode]);
+}
 
 //
 // Memory Menu
@@ -826,6 +839,23 @@ void doSoftMute(int16_t enc)
   rx.setAmSoftMuteMaxAttenuation(softMuteMaxAttIdx);
 }
 
+void doSync(int16_t enc)
+{
+  // Synchronous AM is provided by the SSB patch and only applies to USB/LSB.
+  if(!isSSB()) return;
+
+  bool newValue = wrap_range(syncEnabled, enc, 0, 1);
+  if(newValue == syncEnabled) return;
+
+  syncEnabled = newValue;
+
+  // ATS_EX reloads the patch and reapplies the complete band configuration
+  // when SYNC changes. Preserve that sequence rather than only setting the
+  // two properties in-place.
+  unloadSSB();
+  selectBand(bandIdx, false);
+}
+
 void doBand(int16_t enc)
 {
   // Save current band settings
@@ -873,6 +903,11 @@ static void clickMenu(int cmd, bool shortPress)
     case MENU_SETTINGS: currentCmd = CMD_SETTINGS;  break;
     case MENU_SQUELCH:  currentCmd = CMD_SQUELCH;   break;
     case MENU_VOLUME:   currentCmd = CMD_VOLUME;    break;
+
+    case MENU_SYNC:
+      // SYNC is an SSB-patch feature and is not available in FM/AM.
+      if(isSSB()) currentCmd = CMD_SYNC;
+      break;
 
     case MENU_MEMORY:
       currentCmd = CMD_MEMORY;
@@ -974,6 +1009,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
     case CMD_SCROLL:     doScrollDir(enc);break;
     case CMD_UTCOFFSET:  doUTCOffset(scrollDirection * enc);break;
     case CMD_SQUELCH:    doSquelch(enca);break;
+    case CMD_SYNC:       doSync(enc);break;
     case CMD_ABOUT:      doAbout(enc);break;
     default:             return(false);
   }
@@ -1611,6 +1647,15 @@ static void drawZoom(int x, int y, int sx)
   spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, 4);
 }
 
+static void drawSync(int x, int y, int sx)
+{
+  drawCommon(menu[MENU_SYNC], x, y, sx);
+  drawZoomedMenu(menu[MENU_SYNC]);
+  spr.setTextDatum(MC_DATUM);
+  spr.setTextColor(TH.menu_param);
+  spr.drawString(syncEnabled ? "On" : "Off", 40+x+(sx/2), 60+y, 4);
+}
+
 static void drawScrollDir(int x, int y, int sx)
 {
   drawCommon(settings[MENU_SCROLL], x, y, sx);
@@ -1732,6 +1777,7 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_SCROLL:     drawScrollDir(x, y, sx);  break;
     case CMD_UTCOFFSET:  drawUTCOffset(x, y, sx);  break;
     case CMD_SQUELCH:    drawSquelch(x, y, sx);    break;
+    case CMD_SYNC:       drawSync(x, y, sx);        break;
     default:             drawInfo(x, y, sx);       break;
   }
 }

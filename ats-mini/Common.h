@@ -167,6 +167,7 @@ extern uint8_t currentSquelch[];
 extern uint16_t currentFrequency;
 extern int16_t currentBFO;
 extern uint8_t currentMode;
+extern bool syncEnabled;
 extern uint16_t currentCmd;
 extern uint16_t currentBrt;
 extern uint16_t currentSleep;
