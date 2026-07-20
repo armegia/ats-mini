@@ -85,6 +85,7 @@ uint32_t background_timer = millis();   // Background screen refresh timer.
 uint16_t currentCmd  = CMD_NONE;
 uint8_t  currentMode = FM;
 int16_t  currentBFO  = 0;
+bool     syncEnabled = false;
 
 uint8_t  rssi = 0;
 uint8_t  snr  = 0;
@@ -388,6 +389,9 @@ void useBand(const Band *band)
       rx.setSSB(band->minimumFreq, band->maximumFreq, band->currentFreq, 0, currentMode);
       // G8PTN: Always enabled
       rx.setSSBAutomaticVolumeControl(1);
+      // ATS_EX synchronous AM: enable AFC and use the SYNC AVC divider.
+      rx.setSSBDspAfc(syncEnabled ? 0 : 1);
+      rx.setSSBAvcDivider(syncEnabled ? 3 : 0);
       // G8PTN: Commented out
       //rx.setSsbSoftMuteMaxAttenuation(softMuteMaxAttIdx);
       // To move frequency forward, need to move the BFO backwards

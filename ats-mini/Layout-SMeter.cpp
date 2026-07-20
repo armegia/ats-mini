@@ -170,7 +170,7 @@ void drawLayoutSmeter(const char *statusLine1, const char *statusLine2)
   // Draw band and mode
   drawBandAndMode(
     getCurrentBand()->bandName,
-    bandModeDesc[currentMode],
+    getCurrentModeDesc(),
     BAND_OFFSET_X, BAND_OFFSET_Y
   );
 

@@ -26,6 +26,16 @@ arduino-cli core update-index
 arduino-cli lib update-index
 ```
 
+### Visual Studio Code on Windows
+
+The repository includes VS Code tasks backed by `tools/arduino.ps1`; GNU Make is not required. Install Arduino CLI with Winget, then run **Terminal → Run Task → Arduino: Bootstrap + build (OSPI)** once to update the library index and install the versions pinned in `ats-mini/sketch.yaml`:
+
+```powershell
+winget install --id ArduinoSA.CLI -e
+```
+
+After the initial setup, press `Ctrl+Shift+B` to build the default OSPI firmware. Separate tasks are available for QSPI and for uploading the OSPI build to a serial port. Exported binaries, including the merged 8 MB image, are written to `ats-mini/build/esp32.esp32.esp32s3/`.
+
 ## Compile-time options
 
 The available options are:

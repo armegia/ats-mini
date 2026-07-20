@@ -1,0 +1,91 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Arduino: Bootstrap + build (OSPI)",
+      "type": "process",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\arduino.ps1",
+        "-Action",
+        "bootstrap",
+        "-Profile",
+        "esp32s3-ospi"
+      ],
+      "problemMatcher": ["$gcc"],
+      "detail": "Updates the Arduino library index, installs pinned dependencies, and builds the default OSPI firmware."
+    },
+    {
+      "label": "Arduino: Build (OSPI)",
+      "type": "process",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\arduino.ps1",
+        "-Action",
+        "build",
+        "-Profile",
+        "esp32s3-ospi"
+      ],
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Builds the default ESP32-S3 OSPI target defined in ats-mini/sketch.yaml."
+    },
+    {
+      "label": "Arduino: Build (QSPI)",
+      "type": "process",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\arduino.ps1",
+        "-Action",
+        "build",
+        "-Profile",
+        "esp32s3-qspi"
+      ],
+      "problemMatcher": ["$gcc"],
+      "detail": "Builds the ESP32-S3 QSPI target defined in ats-mini/sketch.yaml."
+    },
+    {
+      "label": "Arduino: Upload (OSPI)",
+      "type": "process",
+      "command": "pwsh",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\tools\\arduino.ps1",
+        "-Action",
+        "upload",
+        "-Profile",
+        "esp32s3-ospi",
+        "-Port",
+        "${input:serialPort}"
+      ],
+      "problemMatcher": [],
+      "dependsOn": "Arduino: Build (OSPI)",
+      "detail": "Builds and uploads the OSPI firmware to the selected serial port."
+    }
+  ],
+  "inputs": [
+    {
+      "id": "serialPort",
+      "type": "promptString",
+      "description": "Serial port (for example, COM3)"
+    }
+  ]
+}
