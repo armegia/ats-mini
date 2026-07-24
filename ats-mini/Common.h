@@ -15,7 +15,7 @@
 #define AUTHORS_LINE4  "Marat Fayzullin"
 
 #define VER_APP        235  // Firmware version
-#define VER_APP_SUFFIX "-sync.1" // Fork release suffix
+#define VER_APP_SUFFIX "-sync.2" // Fork release suffix
 #define VER_SETTINGS   71   // Settings version
 #define VER_MEMORIES   71   // Memories version
 #define VER_BANDS      72   // Bands version

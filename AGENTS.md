@@ -74,14 +74,17 @@ private-fork workflow. Read the repository itself as the source of truth.
 - Changing SYNC reloads the SSB patch so the DSP properties take effect. The
   setting is persisted in NVS as `Sync`, is available only in USB/LSB, and is
   shown in the UI as `USB S` or `LSB S`.
-- The fork version is based on upstream `2.35` and is displayed as
-  `2.35-sync.1`. Keep fork releases as an upstream version plus a suffix rather
-  than pretending to be a new upstream release.
+- The fork version is based on upstream `2.35` and the current release is
+  displayed as `2.35-sync.2`. Keep fork releases as an upstream version plus a
+  suffix rather than pretending to be a new upstream release.
 - Current hardware validation used a local AM station at 954 kHz:
   - AM reception worked;
   - ordinary SSB worked and its recovered pitch moved with detuning;
   - SYNC held the recovered pitch stable to approximately 1 kHz of detuning
     (about 953/955 kHz depending on LSB/USB), which is the expected behavior;
+  - the OSPI build was flashed and verified successfully after merging the
+    Arduino ESP32 core 3.3.11 update;
+  - the QSPI build compiles with core 3.3.11 but remains hardware-untested;
   - the full set of bandwidth filters has not yet been tested exhaustively.
 - User-facing behavior and the validation status belong in
   `docs/source/manual.md`; build instructions belong in
@@ -102,6 +105,8 @@ private-fork workflow. Read the repository itself as the source of truth.
   branch would require a force-push and can disrupt other clones.
 - The `v2.35-sync.1` tag is the first experimental synchronous-AM release and
   must remain attached to its original release commit.
+- `v2.35-sync.2` is the follow-up release based on Arduino ESP32 core 3.3.11;
+  its OSPI build is hardware-tested and its QSPI build is compile-tested only.
 
 ## Private Gitea workflow
 
