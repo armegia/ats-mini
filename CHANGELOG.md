@@ -4,6 +4,13 @@ The user manual is available at <https://esp32-si4732.github.io/ats-mini/manual.
 
 <!-- towncrier release notes start -->
 
+## 2.37-sync (2026-08-29)
+
+
+### Added
+
+- Add optional synchronous AM reception in USB and LSB modes, based on the SYNC implementation from Goshante's ATS_EX v1.18 firmware.
+
 ## 2.37 (2026-08-28)
 
 

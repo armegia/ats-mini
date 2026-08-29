@@ -91,7 +91,12 @@ private-fork workflow. Read the repository itself as the source of truth.
     (about 953/955 kHz depending on LSB/USB), which is the expected behavior;
   - the OSPI build was flashed and verified successfully after merging the
     Arduino ESP32 core 3.3.11 update;
+  - the upstream-2.37 OSPI build was subsequently flashed and verified, so the
+    `v2.37-sync` OSPI release is hardware-tested;
   - the QSPI build compiles with core 3.3.11 but remains hardware-untested;
+  - a limited indoor test indicated that per-mode squelch responds in AM, but
+    it was not tested exhaustively; no useful SSB squelch action was observed,
+    as expected from the SI4732 SSB-patch signal-metric limitation;
   - the full set of bandwidth filters has not yet been tested exhaustively.
 - User-facing behavior and the validation status belong in
   `docs/source/manual.md`; build instructions belong in
@@ -114,9 +119,8 @@ private-fork workflow. Read the repository itself as the source of truth.
   must remain attached to its original release commit.
 - `v2.35-sync.2` is the follow-up release based on Arduino ESP32 core 3.3.11;
   its OSPI build is hardware-tested and its QSPI build is compile-tested only.
-- The next release candidate is `v2.37-sync`, based on upstream `v2.37`. Do not
-  describe its OSPI build as hardware-tested until the maintainer flashes and
-  verifies that exact candidate; QSPI remains compile-tested only.
+- `v2.37-sync` is based on upstream `v2.37`; its OSPI build is hardware-tested
+  and its QSPI build is compile-tested only.
 
 ## Private Gitea workflow
 

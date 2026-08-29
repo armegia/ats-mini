@@ -79,6 +79,13 @@ When unlocked in ordinary USB or LSB mode, tuning away from the carrier changes 
 
 Initial hardware validation used a local AM broadcast on 954 kHz. AM and ordinary SSB reception worked normally, while ordinary SSB produced the expected pitch change when detuned. With Sync enabled, the recovered pitch remained stable with approximately 1 kHz of detuning, reaching about 953 or 955 kHz depending on the selected sideband. This is the expected synchronous detection behavior. The OSPI build was also flashed and verified successfully after updating the Arduino ESP32 core to 3.3.11. The QSPI build compiles successfully but has not been tested on hardware. The complete set of bandwidth filters has not yet been tested exhaustively.
 
+The OSPI build for the 2.37-sync release was subsequently flashed and verified
+successfully. A limited indoor test indicated that the upstream per-mode
+squelch responds in AM, but reception conditions did not permit an exhaustive
+test. No useful squelch action was observed in SSB, which is consistent with
+the existing warning that the SI4732 SSB patch does not provide reliable signal
+metrics for this purpose. QSPI remains compile-tested only.
+
 #### Development attribution
 
 This fork feature was produced as a human-AI collaboration. Antonio

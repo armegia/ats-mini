@@ -30,7 +30,10 @@ different target.
 
 ## Releases
 
-Check out the [Releases](https://github.com/esp32-si4732/ats-mini/releases) page.
+Synchronous-AM fork builds are available from the
+[@armegia fork releases](https://github.com/armegia/ats-mini/releases) page.
+Unmodified upstream releases remain available from the
+[ATS Mini project](https://github.com/esp32-si4732/ats-mini/releases).
 
 ## Documentation
 
