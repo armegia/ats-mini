@@ -12,6 +12,22 @@ Based on the following sources:
 * Goshante:          https://github.com/goshante/ats20_ats_ex
 * G8PTN, Dave:       https://github.com/G8PTN/ATS_MINI
 
+## Synchronous AM fork
+
+The `-sync` fork adds optional synchronous AM reception in USB and LSB modes.
+Its implementation was developed as a human-AI collaboration. Antonio
+([@armegia](https://github.com/armegia)) identified the feature, selected
+Goshante's ATS_EX v1.18 as the behavioral reference, made the product and
+release decisions, and performed the OSPI hardware tests. OpenAI Codex analyzed
+both codebases, implemented and documented the port, prepared the Arduino
+CLI/Visual Studio Code build workflow, performed compile validation, integrated
+later upstream releases, and prepared the release artifacts. Antonio reviewed
+and accepted the resulting changes and maintains the fork.
+
+The synchronous detector behavior itself is derived from Goshante's ATS_EX
+firmware; its hardware and user-interface code was not copied into this
+different target.
+
 ## Releases
 
 Check out the [Releases](https://github.com/esp32-si4732/ats-mini/releases) page.

@@ -79,6 +79,19 @@ When unlocked in ordinary USB or LSB mode, tuning away from the carrier changes 
 
 Initial hardware validation used a local AM broadcast on 954 kHz. AM and ordinary SSB reception worked normally, while ordinary SSB produced the expected pitch change when detuned. With Sync enabled, the recovered pitch remained stable with approximately 1 kHz of detuning, reaching about 953 or 955 kHz depending on the selected sideband. This is the expected synchronous detection behavior. The OSPI build was also flashed and verified successfully after updating the Arduino ESP32 core to 3.3.11. The QSPI build compiles successfully but has not been tested on hardware. The complete set of bandwidth filters has not yet been tested exhaustively.
 
+#### Development attribution
+
+This fork feature was produced as a human-AI collaboration. Antonio
+([@armegia](https://github.com/armegia)) proposed the feature, chose ATS_EX
+v1.18 as the reference, made the product decisions, and flashed and tested the
+OSPI builds on the receiver. OpenAI Codex analyzed the two projects, ported the
+SI4735 synchronous-detection behavior, implemented its menu, display and
+persistent-storage integration, prepared the Arduino CLI and Visual Studio Code
+build workflow, compiled the OSPI and QSPI variants, merged subsequent upstream
+changes, and drafted the documentation and release materials. Antonio reviewed
+and accepted the changes and is the fork maintainer. The original synchronous
+AM approach is credited to Goshante's ATS_EX firmware.
+
 ## Settings menu
 
 * **Brightness** - Display brightness level (10...255). The minimal one draws about 80mA of the battery power, the default one about 100mA, the max level about 120mA.

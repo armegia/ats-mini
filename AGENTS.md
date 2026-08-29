@@ -22,6 +22,13 @@ private-fork workflow. Read the repository itself as the source of truth.
   `.gitignore` should contain generated artifacts, caches, editor leftovers,
   and secrets only; do not use it to hide project documentation or operating
   instructions.
+- Preserve the public development attribution for the synchronous-AM fork:
+  Antonio (`@armegia`) defined the goal, selected the reference implementation,
+  made product and release decisions, reviewed the result, and performed OSPI
+  hardware validation. OpenAI Codex performed the repository analysis, feature
+  port and integration, build-tooling work, compile validation, upstream merges,
+  and documentation/release drafting. Goshante's ATS_EX remains credited as the
+  source of the synchronous-AM behavior.
 
 ## Build and VS Code workflow
 
