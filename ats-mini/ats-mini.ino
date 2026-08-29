@@ -14,6 +14,7 @@
 #include "EIBI.h"
 #include "Remote.h"
 #include "BleMode.h"
+#include "Splash.h"
 
 // SI473/5 and UI
 #define MIN_ELAPSED_TIME         5  // 300
@@ -255,6 +256,11 @@ void setup()
   rx.setMaxSeekTime(SEEK_TIMEOUT);
 
   // Draw display for the first time
+  if(splashDraw())
+  {
+    ledcWrite(PIN_LCD_BL, currentBrt);
+    delay(3000);
+  }
   drawScreen();
   ledcWrite(PIN_LCD_BL, currentBrt);
 
