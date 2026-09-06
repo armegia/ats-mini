@@ -81,8 +81,8 @@ private-fork workflow. Read the repository itself as the source of truth.
 - Changing SYNC reloads the SSB patch so the DSP properties take effect. The
   setting is persisted in NVS as `Sync`, is available only in USB/LSB, and is
   shown in the UI as `USB S` or `LSB S`.
-- The fork is currently based on upstream `2.37`; the release candidate is
-  displayed as `2.37-sync`. Keep fork releases as an upstream version plus a
+- The fork is currently based on upstream `2.38`; the release candidate is
+  displayed as `2.38-sync`. Keep fork releases as an upstream version plus a
   suffix rather than pretending to be a new upstream release.
 - Current hardware validation used a local AM station at 954 kHz:
   - AM reception worked;
@@ -121,6 +121,8 @@ private-fork workflow. Read the repository itself as the source of truth.
   its OSPI build is hardware-tested and its QSPI build is compile-tested only.
 - `v2.37-sync` is based on upstream `v2.37`; its OSPI build is hardware-tested
   and its QSPI build is compile-tested only.
+- The next release candidate is `v2.38-sync`, based on upstream `v2.38`.
+  Its OSPI build requires hardware validation; QSPI remains compile-tested only.
 
 ## Private Gitea workflow
 
