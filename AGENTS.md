@@ -81,7 +81,7 @@ private-fork workflow. Read the repository itself as the source of truth.
 - Changing SYNC reloads the SSB patch so the DSP properties take effect. The
   setting is persisted in NVS as `Sync`, is available only in USB/LSB, and is
   shown in the UI as `USB S` or `LSB S`.
-- The fork is currently based on upstream `2.38`; the release candidate is
+- The fork is currently based on upstream `2.38`; the current fork release is
   displayed as `2.38-sync`. Keep fork releases as an upstream version plus a
   suffix rather than pretending to be a new upstream release.
 - Current hardware validation used a local AM station at 954 kHz:
@@ -93,6 +93,10 @@ private-fork workflow. Read the repository itself as the source of truth.
     Arduino ESP32 core 3.3.11 update;
   - the upstream-2.37 OSPI build was subsequently flashed and verified, so the
     `v2.37-sync` OSPI release is hardware-tested;
+  - the exact `v2.38-sync` OSPI release binary was hardware-tested: the
+    firmware version, custom splash screen, synchronous AM, manual date/time
+    setup from the menu and web page, and WiFi/NTP synchronization worked;
+  - RDS Clock Time synchronization and web authentication were not verified;
   - the QSPI build compiles with core 3.3.11 but remains hardware-untested;
   - a limited indoor test indicated that per-mode squelch responds in AM, but
     it was not tested exhaustively; no useful SSB squelch action was observed,
@@ -121,8 +125,9 @@ private-fork workflow. Read the repository itself as the source of truth.
   its OSPI build is hardware-tested and its QSPI build is compile-tested only.
 - `v2.37-sync` is based on upstream `v2.37`; its OSPI build is hardware-tested
   and its QSPI build is compile-tested only.
-- The next release candidate is `v2.38-sync`, based on upstream `v2.38`.
-  Its OSPI build requires hardware validation; QSPI remains compile-tested only.
+- `v2.38-sync` is based on upstream `v2.38`; its exact OSPI release binary is
+  hardware-tested and its QSPI build is compile-tested only. RDS Clock Time
+  synchronization and web authentication remain unverified.
 
 ## Private Gitea workflow
 
