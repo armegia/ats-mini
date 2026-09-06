@@ -4,6 +4,13 @@ The user manual is available at <https://esp32-si4732.github.io/ats-mini/manual.
 
 <!-- towncrier release notes start -->
 
+## 2.38-sync (2026-09-06)
+
+
+### Changed
+
+- Update the synchronous-AM fork to upstream ATS Mini 2.38, including date/time synchronization and manual configuration.
+
 ## 2.38 (2026-09-01)
 
 
