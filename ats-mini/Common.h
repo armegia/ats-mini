@@ -14,7 +14,7 @@
 #define AUTHORS_LINE3  "Goshante, G8PTN (Dave), R9UCL (Max Arnold),"
 #define AUTHORS_LINE4  "Marat Fayzullin"
 
-#define VER_APP        237  // Firmware version
+#define VER_APP        238  // Firmware version
 #define VER_APP_SUFFIX "-sync" // Fork release suffix
 #define VER_SETTINGS   71   // Settings version
 #define VER_MEMORIES   71   // Memories version

@@ -15,6 +15,8 @@
 #include "Remote.h"
 #include "BleMode.h"
 #include "Splash.h"
+#include <stdlib.h>
+#include <time.h>
 
 // SI473/5 and UI
 #define MIN_ELAPSED_TIME         5  // 300
@@ -105,6 +107,10 @@ SI4735_fixed rx;
 //
 void setup()
 {
+  // Keep the C library clock in UTC; display offsets are applied separately.
+  setenv("TZ", "UTC0", 1);
+  tzset();
+
   // Enable serial port
   Serial.begin(115200);
 
@@ -993,8 +999,8 @@ void loop()
   // Tick NETWORK time, connecting to WiFi if requested
   netTickTime();
 
-  // Run clock
-  needRedraw |= clockTickTime();
+  // Update clock display
+  needRedraw |= clockUpdate();
 
   // Periodically refresh the main screen
   // This covers the case where there is nothing else triggering a refresh
