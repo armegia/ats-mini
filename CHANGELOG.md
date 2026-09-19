@@ -4,6 +4,13 @@ The user manual is available at <https://esp32-si4732.github.io/ats-mini/manual.
 
 <!-- towncrier release notes start -->
 
+## 2.40-sync (2026-09-19)
+
+
+### Changed
+
+- Disable GitHub release checks and automatic downloads for firmware builds with a version suffix, such as `-sync`; USB flashing and manual web uploads remain available.
+
 ## 2.40 (2026-09-19)
 
 

@@ -86,6 +86,13 @@ test. No useful squelch action was observed in SSB, which is consistent with
 the existing warning that the SI4732 SSB patch does not provide reliable signal
 metrics for this purpose. QSPI remains compile-tested only.
 
+The 2.40-sync OSPI release candidate was also flashed and verified on hardware.
+Synchronous AM continued to work as in the earlier releases. Its automatic
+GitHub firmware update check was refused and displayed the expected message,
+preventing replacement by an official build without the Sync feature. Manual
+custom-firmware upload through the web interface was not tested. The 2.40-sync
+QSPI build remains compile-tested only.
+
 #### Development attribution
 
 This fork feature was produced as a human-AI collaboration. Antonio

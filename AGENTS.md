@@ -73,6 +73,9 @@ private-fork workflow. Read the repository itself as the source of truth.
 - Release assets should provide clearly named OSPI and QSPI packages. Mark QSPI
   as compile-tested but hardware-untested until a real QSPI receiver validates
   it.
+- For every release candidate and published binary, calculate and report both
+  SHA-256 and MD5 hashes. SHA-256 is the integrity reference; MD5 is also
+  provided because the web flasher displays it for comparison.
 
 ## Synchronous AM feature
 
@@ -102,6 +105,11 @@ private-fork workflow. Read the repository itself as the source of truth.
   - the exact `v2.38-sync` OSPI release binary was hardware-tested: the
     firmware version, custom splash screen, synchronous AM, manual date/time
     setup from the menu and web page, and WiFi/NTP synchronization worked;
+  - the `2.40-sync` OSPI release candidate was flashed and hardware-tested:
+    synchronous AM continued to work as before, and the automatic GitHub
+    update check was refused with the expected message;
+  - manual custom-firmware upload through the web interface was not tested for
+    the `2.40-sync` candidate;
   - RDS Clock Time synchronization and web authentication were not verified;
   - the QSPI build compiles with core 3.3.11 but remains hardware-untested;
   - a limited indoor test indicated that per-mode squelch responds in AM, but
@@ -135,9 +143,10 @@ private-fork workflow. Read the repository itself as the source of truth.
 - `v2.38-sync` is based on upstream `v2.38`; its exact OSPI release binary is
   hardware-tested and its QSPI build is compile-tested only. RDS Clock Time
   synchronization and web authentication remain unverified.
-- The planned `v2.40-sync` update is not yet hardware-validated. Its automatic
-  GitHub update path must refuse official releases while the build has a
-  non-empty version suffix; manual web uploads and USB flashing remain allowed.
+- The `v2.40-sync` OSPI release candidate is hardware-tested. Its automatic
+  GitHub update path refuses official releases while the build has a non-empty
+  version suffix and displays the expected message. Manual web upload remains
+  available in the code but is not hardware-tested; USB flashing is allowed.
 
 ## Private Gitea workflow
 
