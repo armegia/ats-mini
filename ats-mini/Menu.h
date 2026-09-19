@@ -43,10 +43,12 @@
 #define CMD_SLEEPMODE  0x2B00 // |
 #define CMD_LOADEIBI   0x2C00 // |
 #define CMD_USBMODE    0x2D00 // |
-#define CMD_BLEMODE    0x2E00 // |
-#define CMD_WIFIMODE   0x2F00 // |
-#define CMD_DATETIME   0x3000 // |
-#define CMD_ABOUT      0x3100 //-+
+#define CMD_TCPMODE    0x2E00 // |
+#define CMD_BLEMODE    0x2F00 // |
+#define CMD_WIFIMODE   0x3000 // |
+#define CMD_DATETIME   0x3100 // |
+#define CMD_UPDATEFW   0x3200 // |
+#define CMD_ABOUT      0x3300 //-+
 
 // UI Layouts
 #define UI_DEFAULT  0
@@ -84,7 +86,7 @@ typedef struct
 //
 
 extern Band bands[];
-extern Memory memories[];
+extern Memory *memories;
 extern const UTCOffset utcOffsets[];
 extern const char *bandModeDesc[];
 extern const FMRegion fmRegions[];
@@ -119,7 +121,7 @@ const Bandwidth *getCurrentBandwidth();
 uint8_t getRDSMode();
 const char *getCurrentModeDesc();
 
-int getCurrentUTCOffset();
+int8_t getCurrentUTCOffset();
 int getTotalUTCOffsets();
 int getTotalFmRegions();
 int getTotalBleModes();

@@ -18,6 +18,12 @@ private-fork workflow. Read the repository itself as the source of truth.
   The maintainer normally flashes and performs hardware validation.
 - Preserve unrelated work in a dirty tree and never stage or revert
   maintainer-owned changes unless explicitly requested.
+- Read `CONTRIBUTING.md` and `docs/source/development.md` before making changes,
+  follow the surrounding C++ style, and avoid unrelated reformatting.
+- Keep board settings in `ats-mini/sketch.yaml` and
+  `.github/workflows/build.yml` consistent when changing them.
+- For receiver screenshots, follow the repository screenshot skill in
+  `.agents/skills/ats-mini-screenshot/SKILL.md`.
 - Keep durable project instructions such as this file under version control.
   `.gitignore` should contain generated artifacts, caches, editor leftovers,
   and secrets only; do not use it to hide project documentation or operating
@@ -81,9 +87,9 @@ private-fork workflow. Read the repository itself as the source of truth.
 - Changing SYNC reloads the SSB patch so the DSP properties take effect. The
   setting is persisted in NVS as `Sync`, is available only in USB/LSB, and is
   shown in the UI as `USB S` or `LSB S`.
-- The fork is currently based on upstream `2.38`; the current fork release is
-  displayed as `2.38-sync`. Keep fork releases as an upstream version plus a
-  suffix rather than pretending to be a new upstream release.
+- The current development target is based on upstream `2.40` and is displayed
+  as `2.40-sync`. Keep fork releases as an upstream version plus a suffix rather
+  than pretending to be a new upstream release.
 - Current hardware validation used a local AM station at 954 kHz:
   - AM reception worked;
   - ordinary SSB worked and its recovered pitch moved with detuning;
@@ -105,7 +111,8 @@ private-fork workflow. Read the repository itself as the source of truth.
 - User-facing behavior and the validation status belong in
   `docs/source/manual.md`; build instructions belong in
   `docs/source/development.md`; noteworthy changes need a Towncrier fragment in
-  `changelog/`.
+  `changelog/`. Edit an existing unreleased fragment for the same feature or
+  create one if none exists; skip fragments for internal-only changes.
 
 ## Git branches and remotes
 
@@ -128,6 +135,9 @@ private-fork workflow. Read the repository itself as the source of truth.
 - `v2.38-sync` is based on upstream `v2.38`; its exact OSPI release binary is
   hardware-tested and its QSPI build is compile-tested only. RDS Clock Time
   synchronization and web authentication remain unverified.
+- The planned `v2.40-sync` update is not yet hardware-validated. Its automatic
+  GitHub update path must refuse official releases while the build has a
+  non-empty version suffix; manual web uploads and USB flashing remain allowed.
 
 ## Private Gitea workflow
 

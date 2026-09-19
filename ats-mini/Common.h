@@ -2,8 +2,14 @@
 #define COMMON_H
 
 #include <stdint.h>
-#include <TFT_eSPI.h>
+#include "Display.h"
 #include <SI4735-fixed.h>
+
+// Shorthands for the LovyanGFX fonts used by the UI
+static constexpr const lgfx::IFont* FONT_DEFAULT = &lgfx::fonts::Font0;  // 6x8 system font
+static constexpr const lgfx::IFont* FONT_SMALL   = &lgfx::fonts::Font2;  // 16px general UI text
+static constexpr const lgfx::IFont* FONT_LARGE   = &lgfx::fonts::Font4;  // 26px values and titles
+static constexpr const lgfx::IFont* FONT_DIGITS  = &lgfx::fonts::Font7;  // 48px 7-segment digits
 
 #define RECEIVER_DESC  "ESP32-SI4732 Receiver"
 #define RECEIVER_NAME  "ATS-Mini"
@@ -14,12 +20,13 @@
 #define AUTHORS_LINE3  "Goshante, G8PTN (Dave), R9UCL (Max Arnold),"
 #define AUTHORS_LINE4  "Marat Fayzullin"
 
-#define VER_APP        238  // Firmware version
+#define VER_APP        240  // Firmware version
 #define VER_APP_SUFFIX "-sync" // Fork release suffix
-#define VER_SETTINGS   71   // Settings version
-#define VER_MEMORIES   71   // Memories version
-#define VER_BANDS      72   // Bands version
-#define VER_STORAGE     0   // LittleFS storage version
+#define VER_OTA          1  // OTA compatibility; bump when a full USB flash is required
+#define VER_SETTINGS    71  // Settings version
+#define VER_MEMORIES    71  // Memories version
+#define VER_BANDS       72  // Bands version
+#define VER_STORAGE      0  // LittleFS storage version
 
 // Modes
 #define FM            0
@@ -52,7 +59,7 @@
 
 // Display PINs
 #define PIN_LCD_BL    15            // GPIO15   LCD backlight (PWM brightness control)
-// All other pins are defined by the TFT_eSPI library
+// All other pins are defined in the LovyanGFX configuration
 
 // Rotary Enconder PINs
 #define ENCODER_PIN_A  2            // GPIO02
@@ -71,7 +78,7 @@
 
 // Display PINs
 #define PIN_LCD_BL    38            // GPIO38   LCD backlight (PWM brightness control)
-// All other pins are defined by the TFT_eSPI library
+// All other pins are defined in the LovyanGFX configuration
 
 // Rotary Enconder PINs
 #define ENCODER_PIN_A  2            // GPIO02
@@ -99,10 +106,15 @@
 #define BLE_OFF        0 // Bluetooth is disabled
 #define BLE_ADHOC      1 // Ad hoc BLE serial protocol
 #define BLE_HID        2 // BLE HID central
+#define BLE_UNPAIR_ALL 3 // Clear all BLE bonds, then disable Bluetooth
 
 // USB modes
 #define USB_OFF        0 // USB is disabled
 #define USB_ADHOC      1 // Ad hoc serial protocol
+
+// TCP modes
+#define TCP_OFF        0 // TCP control is disabled
+#define TCP_ADHOC      1 // Ad hoc protocol over TCP
 
 //
 // Data Types
@@ -155,8 +167,8 @@ typedef struct
 //
 
 extern SI4735_fixed rx;
-extern TFT_eSprite spr;
-extern TFT_eSPI tft;
+extern LGFX_Sprite spr;
+extern LGFX tft;
 
 extern bool pushAndRotate;
 extern volatile bool seekStop;
@@ -175,6 +187,7 @@ extern uint16_t currentSleep;
 extern uint8_t sleepModeIdx;
 extern bool zoomMenu;
 extern int8_t scrollDirection;
+extern bool encoderHalfStep;
 extern uint8_t utcOffsetIdx;
 extern uint8_t uiLayoutIdx;
 
@@ -187,6 +200,7 @@ extern int8_t AmSoftMuteIdx;
 extern int8_t SsbSoftMuteIdx;
 extern uint8_t rdsModeIdx;
 extern uint8_t usbModeIdx;
+extern uint8_t tcpModeIdx;
 extern uint8_t bleModeIdx;
 extern uint8_t wifiModeIdx;
 extern uint8_t FmRegionIdx;
@@ -201,6 +215,7 @@ extern const int CALMax;
 static inline bool isSSB() { return(currentMode>FM && currentMode<AM); }
 
 void useBand(const Band *band);
+void setEncoderHalfStep(bool enabled);
 bool updateFrequency(int newFreq, bool wrap = true);
 bool updateBFO(int newBFO, bool wrap = true);
 bool doSeek(int16_t enc);

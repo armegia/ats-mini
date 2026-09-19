@@ -4,6 +4,7 @@
 #include "Utils.h"
 #include "Draw.h"
 #include "EIBI.h"
+#include "Ota.h"
 #include "BleMode.h"
 #include "Menu.h"
 
@@ -128,10 +129,15 @@ static const char *menu[] =
 #define MENU_SLEEPMODE    11
 #define MENU_LOADEIBI     12
 #define MENU_USBMODE      13
-#define MENU_BLEMODE      14
-#define MENU_WIFIMODE     15
-#define MENU_ABOUT        16
+#define MENU_TCPMODE      14
+#define MENU_BLEMODE      15
+#define MENU_WIFIMODE     16
+#define MENU_UPDATEFW     17
+#define MENU_ABOUT        18
 
+
+static uint8_t updateFwIdx = 0;
+static const char *const updateFwActions[] = {"Check", "Update"};
 
 int8_t settingsIdx = MENU_BRIGHTNESS;
 
@@ -151,8 +157,10 @@ static const char *settings[] =
   "Sleep Mode",
   "Load EiBi",
   "USB Port",
+  "TCP Port",
   "Bluetooth",
   "Wi-Fi",
+  "Update FW",
   "About",
 };
 
@@ -192,10 +200,10 @@ const char *getCurrentModeDesc()
 //
 
 uint8_t memoryIdx = 0;
-Memory memories[MEMORY_COUNT];
+Memory *memories = nullptr;
 Memory newMemory;
 
-int getTotalMemories() { return(ITEM_COUNT(memories)); }
+int getTotalMemories() { return(MEMORY_COUNT); }
 
 //
 // RDS Menu
@@ -274,7 +282,7 @@ const UTCOffset utcOffsets[] =
   { 14 * 4, "UTC+14" },
 };
 
-int getCurrentUTCOffset() { return(utcOffsets[utcOffsetIdx].offset); }
+int8_t getCurrentUTCOffset() { return(utcOffsets[utcOffsetIdx].offset); }
 int getTotalUTCOffsets() { return(ITEM_COUNT(utcOffsets)); }
 
 //
@@ -318,12 +326,21 @@ static const char *usbModeDesc[] =
 int getTotalUSBModes() { return(ITEM_COUNT(usbModeDesc)); }
 
 //
+// TCP Port Mode Menu
+//
+
+uint8_t tcpModeIdx = TCP_OFF;
+static const char *tcpModeDesc[] =
+{ "Off", "Ad hoc" };
+
+//
 // Bluetooth Mode Menu
 //
 
 uint8_t bleModeIdx = BLE_OFF;
+static uint8_t bleModeMenuIdx = BLE_OFF;
 static const char *bleModeDesc[] =
-{ "Off", "Ad hoc", "HID" };
+{ "Off", "Ad hoc", "HID", "Unpair All" };
 
 int getTotalBleModes() { return(ITEM_COUNT(bleModeDesc)); }
 
@@ -748,9 +765,14 @@ static void doUSBMode(int16_t enc)
   usbModeIdx = wrap_range(usbModeIdx, enc, 0, LAST_ITEM(usbModeDesc));
 }
 
+static void doTCPMode(int16_t enc)
+{
+  tcpModeIdx = wrap_range(tcpModeIdx, enc, 0, LAST_ITEM(tcpModeDesc));
+}
+
 static void doBleMode(int16_t enc)
 {
-  bleModeIdx = wrap_range(bleModeIdx, enc, 0, LAST_ITEM(bleModeDesc));
+  bleModeMenuIdx = wrap_range(bleModeMenuIdx, enc, 0, LAST_ITEM(bleModeDesc));
 }
 
 static void doWiFiMode(int16_t enc)
@@ -761,6 +783,7 @@ static void doWiFiMode(int16_t enc)
 static void clickBleMode(uint8_t mode, bool shortPress)
 {
   currentCmd = CMD_NONE;
+  bleModeIdx = mode;
   bleInit(mode);
 }
 
@@ -840,14 +863,14 @@ bool tuneToMemory(const Memory *memory)
 
 static void doMemory(int16_t enc)
 {
-  memoryIdx = wrap_range(memoryIdx, enc, 0, LAST_ITEM(memories));
+  memoryIdx = wrap_range(memoryIdx, enc, 0, getTotalMemories() - 1);
   if(!tuneToMemory(&memories[memoryIdx])) tuneToMemory(&newMemory);
 }
 
 static void clickMemory(uint8_t idx, bool shortPress)
 {
   // Must have a valid index
-  if(idx>LAST_ITEM(memories)) return;
+  if(idx>=getTotalMemories()) return;
 
   if(shortPress)
   {
@@ -1067,13 +1090,21 @@ static void clickSettings(int cmd, bool shortPress)
     case MENU_SLEEPMODE:  currentCmd = CMD_SLEEPMODE;  break;
     case MENU_UTCOFFSET:  currentCmd = CMD_UTCOFFSET;  break;
     case MENU_USBMODE:    currentCmd = CMD_USBMODE;    break;
-    case MENU_BLEMODE:    currentCmd = CMD_BLEMODE;    break;
+    case MENU_TCPMODE:    currentCmd = CMD_TCPMODE;    break;
+    case MENU_BLEMODE:
+      bleModeMenuIdx = bleModeIdx;
+      currentCmd = CMD_BLEMODE;
+      break;
     case MENU_WIFIMODE:   currentCmd = CMD_WIFIMODE;   break;
     case MENU_FM_REGION:
       // Only in FM mode
       if(currentMode==FM) currentCmd = CMD_FM_REGION;
       break;
     case MENU_ABOUT:      currentCmd = CMD_ABOUT;     break;
+    case MENU_UPDATEFW:
+      updateFwIdx = 0;
+      currentCmd = CMD_UPDATEFW;
+      break;
 
     case MENU_LOADEIBI:
       eibiLoadSchedule();
@@ -1109,6 +1140,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
     case CMD_SLEEP:      doSleep(enca);break;
     case CMD_SLEEPMODE:  doSleepMode(scrollDirection * enc);break;
     case CMD_USBMODE:    doUSBMode(scrollDirection * enc);break;
+    case CMD_TCPMODE:    doTCPMode(scrollDirection * enc);break;
     case CMD_BLEMODE:    doBleMode(scrollDirection * enc);break;
     case CMD_WIFIMODE:   doWiFiMode(scrollDirection * enc);break;
     case CMD_ZOOM:       doZoom(enc);break;
@@ -1117,6 +1149,7 @@ bool doSideBar(uint16_t cmd, int16_t enc, int16_t enca)
     case CMD_DATETIME:   doDateTime(enc);break;
     case CMD_SQUELCH:    doSquelch(enca);break;
     case CMD_SYNC:       doSync(enc);break;
+    case CMD_UPDATEFW:   updateFwIdx = wrap_range(updateFwIdx, scrollDirection * enc, 0, LAST_ITEM(updateFwActions));break;
     case CMD_ABOUT:      doAbout(enc);break;
     default:             return(false);
   }
@@ -1131,8 +1164,9 @@ bool clickHandler(uint16_t cmd, bool shortPress)
   {
     case CMD_MENU:     clickMenu(menuIdx, shortPress);break;
     case CMD_SETTINGS: clickSettings(settingsIdx, shortPress);break;
+    case CMD_UPDATEFW: otaRequestLatest(updateFwIdx == 1);break;
     case CMD_MEMORY:   clickMemory(memoryIdx, shortPress);break;
-    case CMD_BLEMODE:  clickBleMode(bleModeIdx, shortPress);break;
+    case CMD_BLEMODE:  clickBleMode(bleModeMenuIdx, shortPress);break;
     case CMD_WIFIMODE: clickWiFiMode(wifiModeIdx, shortPress);break;
     case CMD_VOLUME:   clickVolume(shortPress);break;
     case CMD_SQUELCH:  clickSquelch(shortPress);break;
@@ -1195,13 +1229,13 @@ static void drawCommon(const char *title, int x, int y, int sx, bool cursor = fa
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_hdr);
-  spr.fillSmoothRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
-  spr.fillSmoothRoundRect(2+x, 2+y, 74+sx, 108, 4, TH.menu_bg);
+  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_bg);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
 
-  spr.drawString(title, 40+x+(sx/2), 12+y, 2);
+  spr.drawString(title, 40+x+(sx/2), 12+y, FONT_SMALL);
   spr.drawLine(1+x, 23+y, 76+sx, 23+y, TH.menu_border);
 
-  spr.setTextFont(0);
+  spr.setFont(FONT_DEFAULT);
   spr.setTextColor(TH.menu_item);
   if(cursor)
     spr.fillRoundRect(6+x, 24+y+(2*16), 66+sx, 16, 2, TH.menu_hl_bg);
@@ -1211,14 +1245,14 @@ static void drawMenu(int x, int y, int sx)
 {
   spr.setTextDatum(MC_DATUM);
 
-  spr.fillSmoothRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
-  spr.fillSmoothRoundRect(2+x, 2+y, 74+sx, 108, 4, TH.menu_bg);
+  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_bg);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
   spr.setTextColor(TH.menu_hdr);
 
-  spr.drawString("Menu", 40+x+(sx/2), 12+y, 2);
+  spr.drawString("Menu", 40+x+(sx/2), 12+y, FONT_SMALL);
   spr.drawLine(1+x, 23+y, 76+sx, 23+y, TH.menu_border);
 
-  spr.setTextFont(0);
+  spr.setFont(FONT_DEFAULT);
   spr.setTextColor(TH.menu_item);
   spr.fillRoundRect(6+x, 24+y+(2*16), 66+sx, 16, 2, TH.menu_hl_bg);
 
@@ -1232,7 +1266,7 @@ static void drawMenu(int x, int y, int sx)
       spr.setTextColor(TH.menu_item);
     }
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(menu[abs((menuIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(menu[abs((menuIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1240,13 +1274,13 @@ static void drawSettings(int x, int y, int sx)
 {
   spr.setTextDatum(MC_DATUM);
 
-  spr.fillSmoothRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
-  spr.fillSmoothRoundRect(2+x, 2+y, 74+sx, 108, 4, TH.menu_bg);
+  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_bg);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.menu_border);
   spr.setTextColor(TH.menu_hdr);
-  spr.drawString("Settings", 40+x+(sx/2), 12+y, 2);
+  spr.drawString("Settings", 40+x+(sx/2), 12+y, FONT_SMALL);
   spr.drawLine(1+x, 23+y, 76+sx, 23+y, TH.menu_border);
 
-  spr.setTextFont(0);
+  spr.setFont(FONT_DEFAULT);
   spr.setTextColor(TH.menu_item);
   spr.fillRoundRect(6+x, 24+y+(2*16), 66+sx, 16, 2, TH.menu_hl_bg);
 
@@ -1261,7 +1295,7 @@ static void drawSettings(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(settings[abs((settingsIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(settings[abs((settingsIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1281,7 +1315,7 @@ static void drawMode(int x, int y, int sx)
 
     spr.setTextDatum(MC_DATUM);
     if((currentMode!=FM) || (i==0))
-     spr.drawString(bandModeDesc[abs((currentMode+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+     spr.drawString(bandModeDesc[abs((currentMode+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1302,16 +1336,16 @@ static void drawStep(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(steps[currentMode][abs((idx+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(steps[currentMode][abs((idx+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
 static void drawSeek(int x, int y, int sx)
 {
   drawCommon(menu[MENU_SEEK], x, y, sx);
-  spr.drawSmoothArc(40+x+(sx/2), 66+y, 30, 27, 45, 180, TH.menu_param, TH.menu_bg);
+  spr.fillArc(40+x+(sx/2), 66+y, 30, 27, 135, 270, TH.menu_param);
   spr.fillTriangle(40+x+(sx/2)-5, 66+y-32, 40+x+(sx/2)+5, 66+y-27, 40+x+(sx/2)-5, 66+y-22, TH.menu_param);
-  spr.drawSmoothArc(40+x+(sx/2), 66+y, 30, 27, 225, 360, TH.menu_param, TH.menu_bg);
+  spr.fillArc(40+x+(sx/2), 66+y, 30, 27, 315, 450, TH.menu_param);
   spr.fillTriangle(40+x+(sx/2)+5, 66+y+32, 40+x+(sx/2)-5, 66+y+27, 40+x+(sx/2)+5, 66+y+22, TH.menu_param);
 
   if(seekMode()==SEEK_SCHEDULE)
@@ -1327,13 +1361,13 @@ static void drawScan(int x, int y, int sx)
   drawCommon(menu[MENU_SCAN], x, y, sx);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.scan_rssi);
-  spr.drawString("S", 40+x+(sx/2)-30, 66+y+30, 2);
+  spr.drawString("S", 40+x+(sx/2)-30, 66+y+30, FONT_SMALL);
   spr.setTextColor(TH.scan_snr);
-  spr.drawString("N", 40+x+(sx/2)+30, 66+y+30, 2);
+  spr.drawString("N", 40+x+(sx/2)+30, 66+y+30, FONT_SMALL);
 
-  spr.drawSmoothArc(40+x+(sx/2), 66+y, 30, 27, 45, 180, TH.menu_param, TH.menu_bg);
+  spr.fillArc(40+x+(sx/2), 66+y, 30, 27, 135, 270, TH.menu_param);
   spr.fillTriangle(40+x+(sx/2)-5, 66+y-32, 40+x+(sx/2)+5, 66+y-27, 40+x+(sx/2)-5, 66+y-22, TH.menu_param);
-  spr.drawSmoothArc(40+x+(sx/2), 66+y, 30, 27, 225, 360, TH.menu_param, TH.menu_bg);
+  spr.fillArc(40+x+(sx/2), 66+y, 30, 27, 315, 450, TH.menu_param);
   spr.fillTriangle(40+x+(sx/2)+5, 66+y+32, 40+x+(sx/2)-5, 66+y+27, 40+x+(sx/2)+5, 66+y+22, TH.menu_param);
 
   spr.drawLine(40+x+(sx/2)-17, 66+y+5, 40+x+(sx/2)-4, 66+y+5, TH.menu_param);
@@ -1357,7 +1391,7 @@ static void drawBand(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(bands[abs((bandIdx+count+i)%count)].bandName, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(bands[abs((bandIdx+count+i)%count)].bandName, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1378,7 +1412,7 @@ static void drawBandwidth(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(bandwidths[currentMode][abs((idx+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(bandwidths[currentMode][abs((idx+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1397,7 +1431,7 @@ static void drawSleepMode(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(sleepModeDesc[abs((sleepModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(sleepModeDesc[abs((sleepModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1421,7 +1455,27 @@ static void drawUSBMode(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(usbModeDesc[abs((usbModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(usbModeDesc[abs((usbModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
+  }
+}
+
+static void drawTCPMode(int x, int y, int sx)
+{
+  drawCommon(settings[MENU_TCPMODE], x, y, sx, true);
+
+  int count = ITEM_COUNT(tcpModeDesc);
+  for(int i=0 ; i<count ; i++)
+  {
+    if(i == tcpModeIdx)
+    {
+      drawZoomedMenu(tcpModeDesc[i]);
+      spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
+    }
+    else
+      spr.setTextColor(TH.menu_item);
+
+    spr.setTextDatum(MC_DATUM);
+    spr.drawString(tcpModeDesc[i], 40+x+(sx/2), 64+y+((i-tcpModeIdx)*16), FONT_SMALL);
   }
 }
 
@@ -1433,19 +1487,38 @@ static void drawBleMode(int x, int y, int sx)
   for(int i=-2 ; i<3 ; i++)
   {
     if(i==0) {
-      drawZoomedMenu(bleModeDesc[abs((bleModeIdx+count+i)%count)]);
+      drawZoomedMenu(bleModeDesc[abs((bleModeMenuIdx+count+i)%count)]);
       spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
     } else {
       spr.setTextColor(TH.menu_item);
     }
 
     // Prevent repeats for short menus
-    if (count < 5 && ((bleModeIdx+i) < 0 || (bleModeIdx+i) >= count)) {
+    if (count < 5 && ((bleModeMenuIdx+i) < 0 || (bleModeMenuIdx+i) >= count)) {
       continue;
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(bleModeDesc[abs((bleModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(bleModeDesc[abs((bleModeMenuIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
+  }
+}
+
+static void drawUpdateFW(int x, int y, int sx)
+{
+  drawCommon(settings[MENU_UPDATEFW], x, y, sx, true);
+
+  for(int i=0 ; i<ITEM_COUNT(updateFwActions) ; i++)
+  {
+    if(i == updateFwIdx)
+    {
+      drawZoomedMenu(updateFwActions[i]);
+      spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
+    }
+    else
+      spr.setTextColor(TH.menu_item);
+
+    spr.setTextDatum(MC_DATUM);
+    spr.drawString(updateFwActions[i], 40+x+(sx/2), 64+y+((i-updateFwIdx)*16), FONT_SMALL);
   }
 }
 
@@ -1464,7 +1537,7 @@ static void drawWiFiMode(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(wifiModeDesc[abs((wifiModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(wifiModeDesc[abs((wifiModeIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1483,7 +1556,7 @@ static void drawTheme(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(theme[abs((themeIdx+count+i)%count)].name, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(theme[abs((themeIdx+count+i)%count)].name, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1507,7 +1580,7 @@ static void drawUILayout(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(uiLayoutDesc[abs((uiLayoutIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(uiLayoutDesc[abs((uiLayoutIdx+count+i)%count)], 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1526,7 +1599,7 @@ static void drawRDSMode(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(rdsMode[abs((rdsModeIdx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(rdsMode[abs((rdsModeIdx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1550,7 +1623,7 @@ static void drawUTCOffset(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(utcOffsets[abs((idx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(utcOffsets[abs((idx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1561,14 +1634,14 @@ static void drawDateTimeHighlight(const char *text, uint8_t start, uint8_t lengt
   snprintf(prefix, sizeof(prefix), "%.*s", start, text);
   snprintf(value, sizeof(value), "%.*s", length, text + start);
 
-  int left = x - spr.textWidth(text, 2) / 2;
-  int valueX = left + spr.textWidth(prefix, 2);
-  int valueWidth = spr.textWidth(value, 2);
+  int left = x - spr.textWidth(text, FONT_SMALL) / 2;
+  int valueX = left + spr.textWidth(prefix, FONT_SMALL);
+  int valueWidth = spr.textWidth(value, FONT_SMALL);
 
   spr.fillRoundRect(valueX - 1, y - 8, valueWidth + 2, 16, 2, TH.menu_hl_bg);
   spr.setTextDatum(ML_DATUM);
   spr.setTextColor(TH.menu_hl_text, TH.menu_hl_bg);
-  spr.drawString(value, valueX, y, 2);
+  spr.drawString(value, valueX, y, FONT_SMALL);
 }
 
 static void drawDateTime(int x, int y, int sx)
@@ -1589,9 +1662,9 @@ static void drawDateTime(int x, int y, int sx)
   int center = 40 + x + sx / 2;
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_item);
-  spr.drawString(date, center, 41 + y, 2);
-  spr.drawString(time, center, 64 + y, 2);
-  spr.drawString("(UTC)", center, 91 + y, 2);
+  spr.drawString(date, center, 41 + y, FONT_SMALL);
+  spr.drawString(time, center, 64 + y, FONT_SMALL);
+  spr.drawString("(UTC)", center, 91 + y, FONT_SMALL);
 
   drawDateTimeHighlight(
     dateTimeField <= DATETIME_DAY ? date : time,
@@ -1606,7 +1679,7 @@ static void drawMemory(int x, int y, int sx)
   sprintf(label_memory, "%s %2.2d", menu[MENU_MEMORY], memoryIdx + 1);
   drawCommon(label_memory, x, y, sx, true);
 
-  int count = ITEM_COUNT(memories);
+  int count = getTotalMemories();
   for(int i=-2 ; i<3 ; i++)
   {
     int j = abs((memoryIdx+count+i)%count);
@@ -1628,7 +1701,7 @@ static void drawMemory(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(text, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(text, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1639,7 +1712,7 @@ static void drawVolume(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(volume, 40+x+(sx/2), 66+y, 7);
+  spr.drawNumber(volume, 40+x+(sx/2), 66+y, FONT_DIGITS);
 
   if(muteOn(MUTE_MAIN))
   {
@@ -1661,16 +1734,16 @@ static void drawAgc(int x, int y, int sx)
   // rx.getAutomaticGainControl();
   if(!agcNdx && !agcIdx)
   {
-    spr.setFreeFont(&Orbitron_Light_24);
+    spr.setFont(&lgfx::fonts::Orbitron_Light_24);
     spr.drawString("AGC", 40+x+(sx/2), 48+y);
     spr.drawString("On", 40+x+(sx/2), 72+y);
-    spr.setTextFont(0);
+    spr.setFont(FONT_DEFAULT);
   }
   else
   {
     char text[16];
     sprintf(text, "%2.2d", agcNdx);
-    spr.drawString(text, 40+x+(sx/2), 60+y, 7);
+    spr.drawString(text, 40+x+(sx/2), 60+y, FONT_DIGITS);
   }
 }
 
@@ -1684,13 +1757,13 @@ static void drawSquelch(int x, int y, int sx)
   bool squelchParam = currentSquelch[currentMode] & 0x80;
   if(squelchValue)
   {
-    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, 4);
-    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, 4);
+    spr.drawNumber(squelchValue, 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString(squelchParam? "dB":"dBuV", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
   else
   {
-    spr.drawString("Off", 40+x+(sx/2), 60+y, 4);
-    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, 4);
+    spr.drawString("Off", 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString(squelchParam? "(snr)":"(rssi)", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
 }
 
@@ -1701,9 +1774,9 @@ static void drawSoftMuteMaxAtt(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawString("Max Attn", 40+x+(sx/2), 32+y, 2);
-  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, 4);
-  spr.drawString("dB", 40+x+(sx/2), 90+y, 4);
+  spr.drawString("Max Attn", 40+x+(sx/2), 32+y, FONT_SMALL);
+  spr.drawNumber(softMuteMaxAttIdx, 40+x+(sx/2), 60+y, FONT_LARGE);
+  spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
 }
 
 static void drawCal(int x, int y, int sx)
@@ -1715,18 +1788,18 @@ static void drawCal(int x, int y, int sx)
   spr.setTextColor(TH.menu_param);
   if (currentMode == USB)
   {
-    spr.drawString("USB", 40+x+(sx/2), 35+y, 2);
-    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, 4);
+    spr.drawString("USB", 40+x+(sx/2), 35+y, FONT_SMALL);
+    spr.drawNumber(getCurrentBand()->usbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
   }
   else if (currentMode == LSB)
   {
-    spr.drawString("LSB", 40+x+(sx/2), 35+y, 2);
-    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, 4);
+    spr.drawString("LSB", 40+x+(sx/2), 35+y, FONT_SMALL);
+    spr.drawNumber(getCurrentBand()->lsbCal, 40+x+(sx/2), 65+y, FONT_LARGE);
   }
   else
-    spr.drawNumber(0, 40+x+(sx/2), 65+y, 4);  // Display zero or nothing for other modes
+    spr.drawNumber(0, 40+x+(sx/2), 65+y, FONT_LARGE);  // Display zero or nothing for other modes
 
-  spr.drawString("Hz", 40+x+(sx/2), 95+y, 4);
+  spr.drawString("Hz", 40+x+(sx/2), 95+y, FONT_LARGE);
 }
 
 static void drawAvc(int x, int y, int sx)
@@ -1736,14 +1809,14 @@ static void drawAvc(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawString("Max Gain", 40+x+(sx/2), 32+y, 2);
+  spr.drawString("Max Gain", 40+x+(sx/2), 32+y, FONT_SMALL);
 
   // Only show AVC for AM and SSB modes
   if(currentMode!=FM)
   {
     int currentAvc = isSSB()? SsbAvcIdx : AmAvcIdx;
-    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, 4);
-    spr.drawString("dB", 40+x+(sx/2), 90+y, 4);
+    spr.drawNumber(currentAvc, 40+x+(sx/2), 60+y, FONT_LARGE);
+    spr.drawString("dB", 40+x+(sx/2), 90+y, FONT_LARGE);
   }
 }
 
@@ -1767,7 +1840,7 @@ static void drawFmRegion(int x, int y, int sx)
     }
 
     spr.setTextDatum(MC_DATUM);
-    spr.drawString(fmRegions[abs((FmRegionIdx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), 2);
+    spr.drawString(fmRegions[abs((FmRegionIdx+count+i)%count)].desc, 40+x+(sx/2), 64+y+(i*16), FONT_SMALL);
   }
 }
 
@@ -1778,7 +1851,7 @@ static void drawBrt(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, 4);
+  spr.drawNumber(currentBrt, 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawSleep(int x, int y, int sx)
@@ -1788,7 +1861,7 @@ static void drawSleep(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, 4);
+  spr.drawNumber(currentSleep, 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawZoom(int x, int y, int sx)
@@ -1798,7 +1871,7 @@ static void drawZoom(int x, int y, int sx)
   spr.setTextDatum(MC_DATUM);
 
   spr.setTextColor(TH.menu_param);
-  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, 4);
+  spr.drawString(zoomMenu ? "On" : "Off", 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawSync(int x, int y, int sx)
@@ -1807,7 +1880,7 @@ static void drawSync(int x, int y, int sx)
   drawZoomedMenu(menu[MENU_SYNC]);
   spr.setTextDatum(MC_DATUM);
   spr.setTextColor(TH.menu_param);
-  spr.drawString(syncEnabled ? "On" : "Off", 40+x+(sx/2), 60+y, 4);
+  spr.drawString(syncEnabled ? "On" : "Off", 40+x+(sx/2), 60+y, FONT_LARGE);
 }
 
 static void drawScrollDir(int x, int y, int sx)
@@ -1829,39 +1902,39 @@ static void drawInfo(int x, int y, int sx)
   // Info box
   spr.setTextDatum(ML_DATUM);
   spr.setTextColor(TH.box_text);
-  spr.fillSmoothRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_border);
-  spr.fillSmoothRoundRect(2+x, 2+y, 74+sx, 108, 4, TH.box_bg);
+  spr.fillRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_bg);
+  spr.drawRoundRect(1+x, 1+y, 76+sx, 110, 4, TH.box_border);
 
-  spr.drawString("Step:", 6+x, 64+y+(-3*16), 2);
-  spr.drawString(getCurrentStep()->desc, 48+x, 64+y+(-3*16), 2);
+  spr.drawString("Step:", 6+x, 64+y+(-3*16), FONT_SMALL);
+  spr.drawString(getCurrentStep()->desc, 48+x, 64+y+(-3*16), FONT_SMALL);
 
-  spr.drawString("BW:", 6+x, 64+y+(-2*16), 2);
-  spr.drawString(getCurrentBandwidth()->desc, 48+x, 64+y+(-2*16), 2);
+  spr.drawString("BW:", 6+x, 64+y+(-2*16), FONT_SMALL);
+  spr.drawString(getCurrentBandwidth()->desc, 48+x, 64+y+(-2*16), FONT_SMALL);
 
   if(!agcNdx && !agcIdx)
   {
-    spr.drawString("AGC:", 6+x, 64+y+(-1*16), 2);
-    spr.drawString("On", 48+x, 64+y+(-1*16), 2);
+    spr.drawString("AGC:", 6+x, 64+y+(-1*16), FONT_SMALL);
+    spr.drawString("On", 48+x, 64+y+(-1*16), FONT_SMALL);
   }
   else
   {
     sprintf(text, "%2.2d", agcNdx);
-    spr.drawString("Att:", 6+x, 64+y+(-1*16), 2);
-    spr.drawString(text, 48+x, 64+y+(-1*16), 2);
+    spr.drawString("Att:", 6+x, 64+y+(-1*16), FONT_SMALL);
+    spr.drawString(text, 48+x, 64+y+(-1*16), FONT_SMALL);
   }
 
-  spr.drawString("Vol:", 6+x, 64+y+(0*16), 2);
+  spr.drawString("Vol:", 6+x, 64+y+(0*16), FONT_SMALL);
   if(muteOn(MUTE_MAIN) || muteOn(MUTE_SQUELCH))
   {
     spr.setTextColor(TH.box_off_text, TH.box_off_bg);
     sprintf(text, muteOn(MUTE_MAIN) ? "Muted" : "%d/sq", volume);
-    spr.drawString(text, 48+x, 64+y+(0*16), 2);
+    spr.drawString(text, 48+x, 64+y+(0*16), FONT_SMALL);
     spr.setTextColor(TH.box_text);
   }
   else
   {
     spr.setTextColor(TH.box_text);
-    spr.drawNumber(volume, 48+x, 64+y+(0*16), 2);
+    spr.drawNumber(volume, 48+x, 64+y+(0*16), FONT_SMALL);
   }
 
   // Draw RDS PI code, if present
@@ -1869,12 +1942,12 @@ static void drawInfo(int x, int y, int sx)
   if(piCode && currentMode == FM)
   {
     sprintf(text, "%04X", piCode);
-    spr.drawString("PI:", 6+x, 64+y + (1*16), 2);
-    spr.drawString(text, 48+x, 64+y + (1*16), 2);
+    spr.drawString("PI:", 6+x, 64+y + (1*16), FONT_SMALL);
+    spr.drawString(text, 48+x, 64+y + (1*16), FONT_SMALL);
   }
   else
   {
-    spr.drawString("AVC:", 6+x, 64+y + (1*16), 2);
+    spr.drawString("AVC:", 6+x, 64+y + (1*16), FONT_SMALL);
 
     if(currentMode==FM)
       sprintf(text, "n/a");
@@ -1883,7 +1956,7 @@ static void drawInfo(int x, int y, int sx)
     else
       sprintf(text, "%2.2ddB", AmAvcIdx);
 
-    spr.drawString(text, 48+x, 64+y + (1*16), 2);
+    spr.drawString(text, 48+x, 64+y + (1*16), FONT_SMALL);
   }
 
   // Draw current time
@@ -1902,8 +1975,8 @@ static void drawInfo(int x, int y, int sx)
       label = date;
     }
 
-    spr.drawString(label, 6+x, 64+y+(2*16), 2);
-    spr.drawString(clock, 48+x, 64+y+(2*16), 2);
+    spr.drawString(label, 6+x, 64+y+(2*16), FONT_SMALL);
+    spr.drawString(clock, 48+x, 64+y+(2*16), FONT_SMALL);
   }
 }
 
@@ -1938,8 +2011,10 @@ void drawSideBar(uint16_t cmd, int x, int y, int sx)
     case CMD_SLEEP:      drawSleep(x, y, sx);      break;
     case CMD_SLEEPMODE:  drawSleepMode(x, y, sx);  break;
     case CMD_USBMODE:    drawUSBMode(x, y, sx);    break;
+    case CMD_TCPMODE:    drawTCPMode(x, y, sx);    break;
     case CMD_BLEMODE:    drawBleMode(x, y, sx);    break;
     case CMD_WIFIMODE:   drawWiFiMode(x, y, sx);   break;
+    case CMD_UPDATEFW:   drawUpdateFW(x, y, sx);   break;
     case CMD_ZOOM:       drawZoom(x, y, sx);       break;
     case CMD_SCROLL:     drawScrollDir(x, y, sx);  break;
     case CMD_UTCOFFSET:  drawUTCOffset(x, y, sx);  break;
