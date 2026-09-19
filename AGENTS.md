@@ -105,7 +105,7 @@ private-fork workflow. Read the repository itself as the source of truth.
   - the exact `v2.38-sync` OSPI release binary was hardware-tested: the
     firmware version, custom splash screen, synchronous AM, manual date/time
     setup from the menu and web page, and WiFi/NTP synchronization worked;
-  - the `2.40-sync` OSPI release candidate was flashed and hardware-tested:
+  - the exact `v2.40-sync` OSPI release binary was flashed and hardware-tested:
     synchronous AM continued to work as before, and the automatic GitHub
     update check was refused with the expected message;
   - manual custom-firmware upload through the web interface was not tested for
@@ -143,7 +143,8 @@ private-fork workflow. Read the repository itself as the source of truth.
 - `v2.38-sync` is based on upstream `v2.38`; its exact OSPI release binary is
   hardware-tested and its QSPI build is compile-tested only. RDS Clock Time
   synchronization and web authentication remain unverified.
-- The `v2.40-sync` OSPI release candidate is hardware-tested. Its automatic
+- `v2.40-sync` is based on upstream `v2.40`; its exact OSPI release binary is
+  hardware-tested and its QSPI build is compile-tested only. Its automatic
   GitHub update path refuses official releases while the build has a non-empty
   version suffix and displays the expected message. Manual web upload remains
   available in the code but is not hardware-tested; USB flashing is allowed.
