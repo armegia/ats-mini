@@ -155,8 +155,15 @@ private-fork workflow. Read the repository itself as the source of truth.
   `antonio`. This address is not a credential, but do not publish it in
   user-facing project documentation.
 - Repository creation must use `tea` or the Gitea API; SSH can push to an
-  existing repository but cannot create one. `tea` is not currently installed,
-  so the direct API is the expected path.
+  existing repository but cannot create one.
+- `tea` 0.16.0 is installed through WinGet. The WinGet shim currently fails to
+  launch, so invoke the real executable at
+  `C:\Users\armeg\AppData\Local\Microsoft\WinGet\Packages\Gitea.tea_Microsoft.Winget.Source_8wekyb3d8bbwe\tea.exe`.
+- The default `tea` login is `local-gitea` and targets the private server as
+  account `antonio`. Verify it with `tea login status local-gitea` before API
+  changes. Do not configure the tea Git credential helper: repository Git
+  operations already use SSH, while tea is used only for API operations such
+  as repositories and releases.
 - For a minimally scoped personal access token that can create the private
   repository via `POST /api/v1/user/repos`, select:
   - access: **all (public, private, and limited)**, not public-only;
@@ -168,9 +175,12 @@ private-fork workflow. Read the repository itself as the source of truth.
   `write` scope also includes read access. The endpoint explicitly rejects a
   public-only token.
 - Never place a token in this repository, a remote URL, command history, chat
-  output, or Git configuration. If the maintainer supplies one through a
-  temporary file, read it without echoing it, send it only in the Authorization
-  header to this Gitea instance, and delete the temporary file after the API
-  operation. Do not retain the token after repository creation.
+  output, or Git configuration. `tea` stores its API token in the maintainer's
+  per-user configuration; never print or copy that token. For a new login, pass
+  it through a temporary `GITEA_SERVER_TOKEN` environment variable populated by
+  `Read-Host -MaskInput`, then remove the variable immediately. If the
+  maintainer instead supplies a token through a temporary file, read it without
+  echoing it, send it only in the Authorization header to this Gitea instance,
+  and delete the temporary file after the API operation.
 - Create the repository as private and obtain its SSH clone URL from the API
   response rather than constructing it manually.
